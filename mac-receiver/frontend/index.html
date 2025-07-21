@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZypherLink - macOS Receiver</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #FF6B35, #6B46C1);
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #10B981;
+            margin-right: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .card h3 {
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .qr-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qr-image {
+            max-width: 180px;
+            max-height: 180px;
+        }
+
+        .qr-placeholder {
+            color: #666;
+            text-align: center;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .label {
+            font-weight: 600;
+            opacity: 0.9;
+        }
+
+        .value {
+            font-family: 'SF Mono', Monaco, monospace;
+            background: rgba(255, 255, 255, 0.3);
+            padding: 5px 10px;
+            border-radius: 5px;
+        }
+
+        .button {
+            background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin: 10px;
+            font-size: 16px;
+        }
+
+        .button:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: translateY(-2px);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .log {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📦 ZypherLink</h1>
+            <p>macOS Receiver</p>
+        </div>
+
+        <div class="status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Connecting...</span>
+            <button class="button" id="toggleBtn" onclick="toggleServer()">Toggle Server</button>
+        </div>
+
+        <div class="grid">
+            <div class="card">
+                <h3>📱 Pair Android Device</h3>
+                <div class="qr-container">
+                    <div class="qr-placeholder" id="qrPlaceholder">
+                        <div>📱</div>
+                        <p>Loading QR Code...</p>
+                    </div>
+                    <img id="qrImage" class="qr-image" style="display: none;">
+                </div>
+                <button class="button" onclick="regenerateQR()">🔄 Generate New QR</button>
+            </div>
+
+            <div class="card">
+                <h3>🖥️ Device Information</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Device Name:</span>
+                        <span class="value" id="deviceName">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">IP Address:</span>
+                        <span class="value" id="ipAddress">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Transfer Port:</span>
+                        <span class="value" id="transferPort">Loading...</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Paired Devices:</span>
+                        <span class="value" id="deviceCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="log" id="logContainer">
+            <div>📋 Application Log:</div>
+            <div id="logContent">Starting ZypherLink...</div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🚀 ZypherLink Frontend starting...');
+        
+        let isInitialized = false;
+        let updateInterval = null;
+
+        // Wait for Wails and initialize
+        window.addEventListener('DOMContentLoaded', function() {
+            log('DOM loaded, waiting for Wails...');
+            waitForWails();
+        });
+
+        function waitForWails() {
+            let attempts = 0;
+            const maxAttempts = 50;
+
+            function checkWails() {
+                attempts++;
+                log(`Checking Wails... (${attempts}/${maxAttempts})`);
+
+                if (window.go && window.go.main && window.go.main.App) {
+                    log('✅ Wails ready! Initializing app...');
+                    initializeApp();
+                    return;
+                }
+
+                if (attempts >= maxAttempts) {
+                    log('❌ Wails failed to initialize');
+                    document.getElementById('statusText').textContent = 'Backend Error';
+                    return;
+                }
+
+                setTimeout(checkWails, 100);
+            }
+
+            checkWails();
+        }
+
+        async function initializeApp() {
+            try {
+                // Test connection
+                const testResult = await window.go.main.App.TestConnection();
+                log(`Connection test: ${testResult}`);
+
+                // Load initial data
+                await updateDeviceInfo();
+                await updateServerStatus();
+                await updateQRCode();
+
+                // Start periodic updates
+                updateInterval = setInterval(async () => {
+                    await updateServerStatus();
+                }, 3000);
+
+                isInitialized = true;
+                log('✅ App fully initialized');
+
+            } catch (error) {
+                log(`❌ Initialization error: ${error}`);
+            }
+        }
+
+        async function updateDeviceInfo() {
+            try {
+                const deviceInfo = await window.go.main.App.GetDeviceInfo();
+                log(`Device info: ${JSON.stringify(deviceInfo)}`);
+
+                document.getElementById('deviceName').textContent = deviceInfo.device_name || 'Unknown';
+                document.getElementById('ipAddress').textContent = deviceInfo.ip_address || 'Unknown';
+                document.getElementById('transferPort').textContent = deviceInfo.port || 'Unknown';
+
+            } catch (error) {
+                log(`❌ Device info error: ${error}`);
+            }
+        }
+
+        async function updateServerStatus() {
+            try {
+                const status = await window.go.main.App.GetServerStatus();
+                
+                const statusText = document.getElementById('statusText');
+                const statusDot = document.getElementById('statusDot');
+                const toggleBtn = document.getElementById('toggleBtn');
+
+                if (status.running) {
+                    statusText.textContent = 'Server Running';
+                    statusDot.style.background = '#10B981';
+                    toggleBtn.textContent = 'Stop Server';
+                } else {
+                    statusText.textContent = 'Server Stopped';
+                    statusDot.style.background = '#EF4444';
+                    toggleBtn.textContent = 'Start Server';
+                }
+
+                document.getElementById('deviceCount').textContent = status.device_count || 0;
+
+            } catch (error) {
+                log(`❌ Status error: ${error}`);
+            }
+        }
+
+        async function updateQRCode() {
+            try {
+                log('📋 Getting QR code...');
+                const qrCode = await window.go.main.App.GetQRCode();
+                
+                if (qrCode && qrCode.length > 0) {
+                    const qrImage = document.getElementById('qrImage');
+                    const qrPlaceholder = document.getElementById('qrPlaceholder');
+                    
+                    qrImage.src = `data:image/png;base64,${qrCode}`;
+                    qrImage.style.display = 'block';
+                    qrPlaceholder.style.display = 'none';
+                    
+                    log('✅ QR code displayed');
+                } else {
+                    log('⚠️ No QR code available, generating...');
+                    await regenerateQR();
+                }
+
+            } catch (error) {
+                log(`❌ QR code error: ${error}`);
+            }
+        }
+
+        async function toggleServer() {
+            if (!isInitialized) {
+                log('⚠️ App not ready yet');
+                return;
+            }
+
+            try {
+                log('🔀 Toggling server...');
+                const newStatus = await window.go.main.App.ToggleServerStatus();
+                log(`Server ${newStatus ? 'started' : 'stopped'}`);
+                
+                // Update status immediately
+                setTimeout(updateServerStatus, 500);
+
+            } catch (error) {
+                log(`❌ Toggle error: ${error}`);
+            }
+        }
+
+        async function regenerateQR() {
+            if (!isInitialized) {
+                log('⚠️ App not ready yet');
+                return;
+            }
+
+            try {
+                log('🔄 Regenerating QR code...');
+                
+                // Show loading
+                const qrImage = document.getElementById('qrImage');
+                const qrPlaceholder = document.getElementById('qrPlaceholder');
+                qrImage.style.display = 'none';
+                qrPlaceholder.style.display = 'block';
+                qrPlaceholder.innerHTML = '<div>🔄</div><p>Generating...</p>';
+
+                const newQRCode = await window.go.main.App.RegenerateQR();
+                
+                if (newQRCode && newQRCode.length > 0) {
+                    qrImage.src = `data:image/png;base64,${newQRCode}`;
+                    qrImage.style.display = 'block';
+                    qrPlaceholder.style.display = 'none';
+                    log('✅ New QR code generated');
+                } else {
+                    qrPlaceholder.innerHTML = '<div>❌</div><p>Generation Failed</p>';
+                    log('❌ QR generation failed');
+                }
+
+            } catch (error) {
+                log(`❌ QR regeneration error: ${error}`);
+                document.getElementById('qrPlaceholder').innerHTML = '<div>❌</div><p>Error</p>';
+            }
+        }
+
+        function log(message) {
+            console.log(message);
+            const logContent = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `<br>${timestamp}: ${message}`;
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+
+        // Cleanup
+        window.addEventListener('beforeunload', () => {
+            if (updateInterval) {
+                clearInterval(updateInterval);
+            }
+        });
+    </script>
+</body>
+</html>

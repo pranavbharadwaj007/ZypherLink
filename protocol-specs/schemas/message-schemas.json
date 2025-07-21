@@ -1,0 +1,303 @@
+{
+  "schemas": {
+    
+    "device_discovery_request": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "required": ["message_type", "device_id", "device_name", "device_type", "timestamp"],
+      "properties": {
+        "message_type": {
+          "type": "string",
+          "enum": ["DISCOVERY_REQ"]
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$",
+          "description": "32-character hex device identifier"
+        },
+        "device_name": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Human-readable device name"
+        },
+        "device_type": {
+          "type": "string", 
+          "enum": ["MAC_RECEIVER", "ANDROID_SENDER", "ANDROID_RECEIVER"]
+        },
+        "protocol_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "default": "1.0.0"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["SEND", "RECEIVE", "CLIPBOARD", "MULTI_FILE"]
+          }
+        },
+        "network_info": {
+          "type": "object",
+          "properties": {
+            "ip_address": {"type": "string", "format": "ipv4"},
+            "port": {"type": "integer", "minimum": 1024, "maximum": 65535}
+          }
+        },
+        "timestamp": {
+          "type": "integer",
+          "description": "Unix timestamp in milliseconds"
+        }
+      }
+    },
+
+    "device_discovery_response": {
+      "$schema": "http://json-schema.org/draft-07/schema#", 
+      "type": "object",
+      "required": ["message_type", "device_id", "device_name", "device_type", "status"],
+      "properties": {
+        "message_type": {
+          "type": "string",
+          "enum": ["DISCOVERY_RESP"]
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "device_name": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "device_type": {
+          "type": "string",
+          "enum": ["MAC_RECEIVER", "ANDROID_SENDER", "ANDROID_RECEIVER"] 
+        },
+        "status": {
+          "type": "string",
+          "enum": ["AVAILABLE", "BUSY", "PAIRED"]
+        },
+        "pairing_required": {
+          "type": "boolean",
+          "default": true
+        },
+        "transfer_endpoint": {
+          "type": "string",
+          "format": "uri",
+          "description": "HTTP endpoint for file transfers"
+        },
+        "qr_pairing_data": {
+          "type": "string",
+          "description": "Base64 encoded QR pairing information"
+        }
+      }
+    },
+
+    "pairing_request": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object", 
+      "required": ["message_type", "requester_device_id", "pairing_code"],
+      "properties": {
+        "message_type": {
+          "type": "string",
+          "enum": ["PAIR_REQ"]
+        },
+        "requester_device_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "requester_name": {
+          "type": "string",
+          "maxLength": 50
+        },
+        "pairing_code": {
+          "type": "string",
+          "pattern": "^[0-9]{6}$",
+          "description": "6-digit pairing code from QR scan"
+        },
+        "public_key": {
+          "type": "string",
+          "description": "Base64 encoded public key for secure communication"
+        },
+        "timestamp": {
+          "type": "integer"
+        }
+      }
+    },
+
+    "pairing_response": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "required": ["message_type", "success", "device_id"],
+      "properties": {
+        "message_type": {
+          "type": "string", 
+          "enum": ["PAIR_RESP"]
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "device_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{32}$"
+        },
+        "auth_token": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$",
+          "description": "Authentication token for future transfers"
+        },
+        "token_expires_at": {
+          "type": "integer",
+          "description": "Token expiry Unix timestamp"
+        },
+        "error_message": {
+          "type": "string",
+          "maxLength": 200
+        }
+      }
+    },
+
+    "file_transfer_request": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "required": ["message_type", "auth_token", "files"],
+      "properties": {
+        "message_type": {
+          "type": "string",
+          "enum": ["TRANSFER_START"]
+        },
+        "auth_token": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "transfer_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{16}$",
+          "description": "Unique transfer session ID"
+        },
+        "files": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "required": ["name", "size", "checksum"],
+            "properties": {
+              "name": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 1073741824
+              },
+              "mime_type": {
+                "type": "string",
+                "maxLength": 100
+              },
+              "checksum": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$",
+                "description": "SHA-256 checksum"
+              },
+              "thumbnail": {
+                "type": "string",
+                "description": "Base64 encoded thumbnail for images/videos"
+              }
+            }
+          }
+        },
+        "total_size": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+
+    "transfer_progress": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "required": ["message_type", "transfer_id", "bytes_transferred", "total_bytes"],
+      "properties": {
+        "message_type": {
+          "type": "string",
+          "enum": ["TRANSFER_PROGRESS"]
+        },
+        "transfer_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{16}$"
+        },
+        "bytes_transferred": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_bytes": {
+          "type": "integer", 
+          "minimum": 0
+        },
+        "current_file": {
+          "type": "string",
+          "maxLength": 255
+        },
+        "files_completed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_files": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "transfer_speed_bps": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Transfer speed in bytes per second"
+        }
+      }
+    },
+
+    "transfer_complete": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "type": "object",
+      "required": ["message_type", "transfer_id", "success"],
+      "properties": {
+        "message_type": {
+          "type": "string",
+          "enum": ["TRANSFER_COMPLETE"]
+        },
+        "transfer_id": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{16}$"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "files_transferred": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total_bytes": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "duration_ms": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "saved_location": {
+          "type": "string",
+          "description": "Path where files were saved"
+        },
+        "error_details": {
+          "type": "object",
+          "properties": {
+            "error_code": {"type": "integer"},
+            "error_message": {"type": "string", "maxLength": 500},
+            "failed_files": {
+              "type": "array",
+              "items": {"type": "string"}
+            }
+          }
+        }
+      }
+    }
+  }
+}

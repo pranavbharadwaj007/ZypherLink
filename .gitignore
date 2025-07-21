@@ -1,0 +1,26 @@
+# General
+.DS_Store
+.vscode/
+.idea/
+*.log
+tmp/
+dist/
+
+# Go (macOS app)
+mac-receiver/build/
+mac-receiver/app/frontend/dist/
+*.exe
+*.exe~
+
+# Android
+android-app/*.iml
+android-app/.gradle/
+android-app/local.properties
+android-app/.idea/
+android-app/build/
+android-app/app/build/
+android-app/captures/
+android-app/.externalNativeBuild/
+
+# Protocol specs
+protocol-specs/generated/

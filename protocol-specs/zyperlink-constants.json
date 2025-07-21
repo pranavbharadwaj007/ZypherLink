@@ -1,0 +1,88 @@
+{
+  "zyperlink_protocol": {
+    "version": "1.0.0",
+    "name": "ZypherLink Transfer Protocol",
+    
+    "network": {
+      "discovery_port": 8765,
+      "transfer_port_range": {
+        "start": 8766,
+        "end": 8776
+      },
+      "broadcast_interval_ms": 3000,
+      "discovery_timeout_ms": 10000,
+      "transfer_timeout_ms": 300000,
+      "max_file_size_mb": 1024,
+      "chunk_size_kb": 1024
+    },
+    
+    "security": {
+      "token_length": 32,
+      "token_expiry_minutes": 30,
+      "max_paired_devices": 10,
+      "pairing_code_length": 6,
+      "qr_code_version": 7
+    },
+    
+    "endpoints": {
+      "discovery": "/api/v1/discover",
+      "pair": "/api/v1/pair",
+      "upload": "/api/v1/upload",
+      "status": "/api/v1/status",
+      "devices": "/api/v1/devices"
+    },
+    
+    "message_types": {
+      "discovery_request": "DISCOVERY_REQ",
+      "discovery_response": "DISCOVERY_RESP", 
+      "pair_request": "PAIR_REQ",
+      "pair_response": "PAIR_RESP",
+      "transfer_start": "TRANSFER_START",
+      "transfer_progress": "TRANSFER_PROGRESS",
+      "transfer_complete": "TRANSFER_COMPLETE",
+      "transfer_error": "TRANSFER_ERROR"
+    },
+    
+    "device_types": {
+      "macos": "MAC_RECEIVER",
+      "android_sender": "ANDROID_SENDER", 
+      "android_receiver": "ANDROID_RECEIVER"
+    },
+    
+    "error_codes": {
+      "invalid_token": 4001,
+      "device_not_paired": 4002,
+      "file_too_large": 4003,
+      "unsupported_file_type": 4004,
+      "transfer_timeout": 4005,
+      "storage_full": 4006,
+      "network_error": 5001,
+      "server_error": 5002
+    },
+    
+    "ui_theme": {
+      "primary_orange": "#FF6B35",
+      "primary_purple": "#6B46C1", 
+      "dark_purple": "#4C1D95",
+      "light_orange": "#FFA07A",
+      "background_dark": "#1F2937",
+      "background_light": "#F9FAFB",
+      "text_primary": "#111827",
+      "text_secondary": "#6B7280",
+      "success_green": "#10B981",
+      "error_red": "#EF4444"
+    },
+    
+    "file_types": {
+      "supported_extensions": [
+        ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp",
+        ".mp4", ".mov", ".avi", ".mkv", ".webm",
+        ".pdf", ".doc", ".docx", ".txt", ".md",
+        ".zip", ".rar", ".7z",
+        ".mp3", ".wav", ".flac", ".m4a"
+      ],
+      "max_files_per_transfer": 50,
+      "preview_size_kb": 100
+    }
+  }
+}

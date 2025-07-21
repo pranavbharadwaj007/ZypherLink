@@ -1,0 +1,208 @@
+# ZypherLink QR Pairing Protocol & HTTP API Specification
+# Version: 1.0.0
+
+qr_pairing_protocol:
+  description: "Secure device pairing using QR codes"
+  
+  qr_code_structure:
+    format: "JSON string encoded in Base64"
+    max_size: 2953  # QR version 7 capacity
+    
+    payload_schema:
+      device_id: 
+        type: "string"
+        pattern: "^[a-f0-9]{32}$"
+        description: "Unique device identifier"
+      
+      device_name:
+        type: "string" 
+        max_length: 30
+        description: "Display name for device"
+        
+      device_type:
+        type: "string"
+        enum: ["MAC_RECEIVER", "ANDROID_RECEIVER"]
+        description: "Type of receiving device"
+        
+      pairing_code:
+        type: "string"
+        pattern: "^[0-9]{6}$"
+        description: "6-digit verification code"
+        
+      network_endpoint:
+        type: "string"
+        format: "uri"
+        description: "HTTP endpoint for pairing requests"
+        example: "http://192.168.1.100:8766/api/v1/pair"
+        
+      public_key:
+        type: "string"
+        description: "Base64 encoded public key"
+        
+      expires_at:
+        type: "integer"
+        description: "Unix timestamp when QR code expires"
+        
+      protocol_version:
+        type: "string"
+        default: "1.0.0"
+
+  pairing_flow:
+    steps:
+      1: "Receiver generates QR code with pairing data"
+      2: "Sender scans QR code and extracts pairing information" 
+      3: "Sender sends pairing request to receiver's endpoint"
+      4: "Receiver validates pairing code and responds with auth token"
+      5: "Both devices store pairing information for future transfers"
+
+# HTTP API Specification
+http_api:
+  base_path: "/api/v1"
+  content_type: "application/json"
+  
+  endpoints:
+    # Device Discovery
+    "/discover":
+      method: "POST"
+      description: "Broadcast device discovery"
+      request_body:
+        schema: "device_discovery_request"
+      responses:
+        200:
+          description: "Discovery successful"
+          schema: "device_discovery_response"
+        400:
+          description: "Invalid request format"
+          
+    # Device Pairing  
+    "/pair":
+      method: "POST"
+      description: "Pair devices using QR code data"
+      request_body:
+        schema: "pairing_request"
+      responses:
+        200:
+          description: "Pairing successful"
+          schema: "pairing_response" 
+        400:
+          description: "Invalid pairing code"
+        401:
+          description: "Pairing code expired"
+        429:
+          description: "Too many pairing attempts"
+          
+    # File Upload
+    "/upload":
+      method: "POST"
+      description: "Upload files to paired device"
+      headers:
+        Authorization: "Bearer {auth_token}"
+        Content-Type: "multipart/form-data"
+      request_body:
+        type: "multipart"
+        fields:
+          metadata:
+            type: "string"
+            description: "JSON metadata matching file_transfer_request schema"
+          files:
+            type: "array"
+            description: "Binary file data"
+      responses:
+        200:
+          description: "Upload started successfully"
+          schema: "transfer_progress"
+        400:
+          description: "Invalid file format or size"
+        401:
+          description: "Invalid or expired auth token"
+        413:
+          description: "File too large"
+        507:
+          description: "Insufficient storage space"
+          
+    # Transfer Status
+    "/status/{transfer_id}":
+      method: "GET"
+      description: "Get transfer progress"
+      headers:
+        Authorization: "Bearer {auth_token}"
+      parameters:
+        transfer_id:
+          type: "string"
+          pattern: "^[a-f0-9]{16}$"
+      responses:
+        200:
+          description: "Status retrieved"
+          schema: "transfer_progress"
+        404:
+          description: "Transfer not found"
+          
+    # Paired Devices
+    "/devices":
+      method: "GET"
+      description: "List paired devices"
+      headers:
+        Authorization: "Bearer {auth_token}"
+      responses:
+        200:
+          description: "Device list retrieved"
+          schema:
+            type: "object"
+            properties:
+              devices:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    device_id: {"type": "string"}
+                    device_name: {"type": "string"}
+                    device_type: {"type": "string"}
+                    last_seen: {"type": "integer"}
+                    is_online: {"type": "boolean"}
+
+# Security Specifications
+security:
+  authentication:
+    method: "Bearer Token"
+    token_format: "64-character hex string"
+    token_expiry: "30 minutes"
+    refresh_mechanism: "Re-pair required"
+    
+  pairing_security:
+    code_generation: "Cryptographically secure random 6-digit number"
+    code_expiry: "10 minutes"
+    max_attempts: 3
+    rate_limiting: "1 attempt per 5 seconds"
+    
+  data_validation:
+    file_size_limit: "1GB per file"
+    total_transfer_limit: "10GB per session"
+    filename_sanitization: "Remove path traversal characters"
+    mime_type_validation: "Whitelist approved file types"
+    
+  network_security:
+    allowed_networks: ["192.168.0.0/16", "10.0.0.0/8", "172.16.0.0/12"]
+    encryption: "TLS 1.3 for HTTPS (optional)"
+    certificate_pinning: "Self-signed certificates allowed on local network"
+
+# Error Response Format
+error_response:
+  schema:
+    type: "object"
+    required: ["error", "message", "timestamp"]
+    properties:
+      error:
+        type: "string"
+        description: "Error code identifier"
+      message:
+        type: "string"
+        description: "Human-readable error message"
+      details:
+        type: "object"
+        description: "Additional error context"
+      timestamp:
+        type: "integer"
+        description: "Unix timestamp of error"
+      request_id:
+        type: "string"
+        description: "Unique request identifier for debugging"

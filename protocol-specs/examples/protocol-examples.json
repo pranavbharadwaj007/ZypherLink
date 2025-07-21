@@ -1,0 +1,190 @@
+{
+  "protocol_examples": {
+    
+    "1_device_discovery": {
+      "description": "Android device discovering macOS receiver",
+      "udp_broadcast": {
+        "message_type": "DISCOVERY_REQ",
+        "device_id": "a1b2c3d4e5f6789012345678901234ab",
+        "device_name": "John's Pixel 8",
+        "device_type": "ANDROID_SENDER",
+        "protocol_version": "1.0.0",
+        "capabilities": ["SEND", "RECEIVE", "MULTI_FILE"],
+        "network_info": {
+          "ip_address": "192.168.1.105",
+          "port": 8767
+        },
+        "timestamp": 1692875400000
+      },
+      "response": {
+        "message_type": "DISCOVERY_RESP",
+        "device_id": "f1e2d3c4b5a6978654321098765432ba",
+        "device_name": "MacBook Pro",
+        "device_type": "MAC_RECEIVER",
+        "status": "AVAILABLE",
+        "pairing_required": true,
+        "transfer_endpoint": "http://192.168.1.100:8766/api/v1/upload",
+        "qr_pairing_data": "eyJkZXZpY2VfaWQiOiJmMWUyZDNjNGI1YTY5Nzg2NTQzMjEwOTg3NjU0MzJiYSIsImRldmljZV9uYW1lIjoiTWFjQm9vayBQcm8iLCJkZXZpY2VfdHlwZSI6Ik1BQ19SRUNFSVZFUiIsInBhaXJpbmdfY29kZSI6IjEyMzQ1NiIsIm5ldHdvcmtfZW5kcG9pbnQiOiJodHRwOi8vMTkyLjE2OC4xLjEwMDo4NzY2L2FwaS92MS9wYWlyIiwicHVibGljX2tleSI6Ik1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdlM..."
+      }
+    },
+
+    "2_qr_code_payload": {
+      "description": "Decoded QR code content for pairing",
+      "qr_content": {
+        "device_id": "f1e2d3c4b5a6978654321098765432ba",
+        "device_name": "MacBook Pro",
+        "device_type": "MAC_RECEIVER", 
+        "pairing_code": "123456",
+        "network_endpoint": "http://192.168.1.100:8766/api/v1/pair",
+        "public_key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvS...",
+        "expires_at": 1692876000000,
+        "protocol_version": "1.0.0"
+      },
+      "base64_encoded": "eyJkZXZpY2VfaWQiOiJmMWUyZDNjNGI1YTY5Nzg2NTQzMjEwOTg3NjU0MzJiYSIsImRldmljZV9uYW1lIjoiTWFjQm9vayBQcm8iLCJkZXZpY2VfdHlwZSI6Ik1BQ19SRUNFSVZFUiIsInBhaXJpbmdfY29kZSI6IjEyMzQ1NiIsIm5ldHdvcmtfZW5kcG9pbnQiOiJodHRwOi8vMTkyLjE2OC4xLjEwMDo4NzY2L2FwaS92MS9wYWlyIiwicHVibGljX2tleSI6Ik1JSUJJakFOQmdrcWhraUc5dzBCQVFFRkFBT0NBUThBTUlJQkNnS0NBUUVBdlM..."
+    },
+
+    "3_pairing_flow": {
+      "description": "Complete pairing process between devices",
+      "step_1_pairing_request": {
+        "message_type": "PAIR_REQ",
+        "requester_device_id": "a1b2c3d4e5f6789012345678901234ab",
+        "requester_name": "John's Pixel 8",
+        "pairing_code": "123456",
+        "public_key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkL...",
+        "timestamp": 1692875450000
+      },
+      "step_2_pairing_response": {
+        "message_type": "PAIR_RESP",
+        "success": true,
+        "device_id": "f1e2d3c4b5a6978654321098765432ba",
+        "auth_token": "7a8b9c0d1e2f3456789012345678901234567890abcdef1234567890abcdef12",
+        "token_expires_at": 1692877250000
+      }
+    },
+
+    "4_file_transfer": {
+      "description": "Transfer multiple files from Android to macOS",
+      "transfer_request_metadata": {
+        "message_type": "TRANSFER_START",
+        "auth_token": "7a8b9c0d1e2f3456789012345678901234567890abcdef1234567890abcdef12",
+        "transfer_id": "abc123def4567890",
+        "files": [
+          {
+            "name": "vacation_photo.jpg",
+            "size": 2458624,
+            "mime_type": "image/jpeg",
+            "checksum": "d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2",
+            "thumbnail": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcU..."
+          },
+          {
+            "name": "presentation.pdf",
+            "size": 1048576,
+            "mime_type": "application/pdf", 
+            "checksum": "e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3e3"
+          }
+        ],
+        "total_size": 3507200
+      },
+      "progress_updates": [
+        {
+          "message_type": "TRANSFER_PROGRESS",
+          "transfer_id": "abc123def4567890",
+          "bytes_transferred": 1229312,
+          "total_bytes": 3507200,
+          "current_file": "vacation_photo.jpg",
+          "files_completed": 0,
+          "total_files": 2,
+          "transfer_speed_bps": 524288
+        },
+        {
+          "message_type": "TRANSFER_PROGRESS", 
+          "transfer_id": "abc123def4567890",
+          "bytes_transferred": 3507200,
+          "total_bytes": 3507200,
+          "current_file": "presentation.pdf",
+          "files_completed": 2,
+          "total_files": 2,
+          "transfer_speed_bps": 498302
+        }
+      ],
+      "completion": {
+        "message_type": "TRANSFER_COMPLETE",
+        "transfer_id": "abc123def4567890", 
+        "success": true,
+        "files_transferred": 2,
+        "total_bytes": 3507200,
+        "duration_ms": 7250,
+        "saved_location": "/Users/john/Downloads/ZypherLink/"
+      }
+    },
+
+    "5_error_scenarios": {
+      "description": "Common error responses",
+      "invalid_token": {
+        "error": "INVALID_AUTH_TOKEN",
+        "message": "Authentication token is invalid or expired",
+        "details": {
+          "error_code": 4001,
+          "token_expired": true,
+          "requires_repairing": true
+        },
+        "timestamp": 1692875500000,
+        "request_id": "req_789xyz123"
+      },
+      "file_too_large": {
+        "error": "FILE_TOO_LARGE",
+        "message": "File size exceeds maximum limit of 1GB",
+        "details": {
+          "error_code": 4003,
+          "file_name": "large_video.mp4",
+          "file_size": 1147483648,
+          "max_allowed_size": 1073741824
+        },
+        "timestamp": 1692875510000,
+        "request_id": "req_456abc789"
+      },
+      "storage_full": {
+        "error": "INSUFFICIENT_STORAGE",
+        "message": "Not enough storage space to receive files",
+        "details": {
+          "error_code": 4006,
+          "available_space": 524288000,
+          "required_space": 1073741824
+        },
+        "timestamp": 1692875520000,
+        "request_id": "req_123def456"
+      }
+    },
+
+    "6_http_headers": {
+      "description": "Example HTTP requests with proper headers",
+      "pairing_request": {
+        "method": "POST",
+        "url": "http://192.168.1.100:8766/api/v1/pair",
+        "headers": {
+          "Content-Type": "application/json",
+          "User-Agent": "ZypherLink-Android/1.0.0",
+          "Accept": "application/json"
+        }
+      },
+      "file_upload": {
+        "method": "POST", 
+        "url": "http://192.168.1.100:8766/api/v1/upload",
+        "headers": {
+          "Authorization": "Bearer 7a8b9c0d1e2f3456789012345678901234567890abcdef1234567890abcdef12",
+          "Content-Type": "multipart/form-data; boundary=----ZypherLinkBoundary123",
+          "User-Agent": "ZypherLink-Android/1.0.0"
+        }
+      },
+      "status_check": {
+        "method": "GET",
+        "url": "http://192.168.1.100:8766/api/v1/status/abc123def4567890", 
+        "headers": {
+          "Authorization": "Bearer 7a8b9c0d1e2f3456789012345678901234567890abcdef1234567890abcdef12",
+          "Accept": "application/json",
+          "User-Agent": "ZypherLink-Android/1.0.0"
+        }
+      }
+    }
+  }
+}
