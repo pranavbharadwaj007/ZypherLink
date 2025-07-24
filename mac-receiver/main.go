@@ -34,6 +34,9 @@ func main() {
 		// Resizable:        true,
 		MinWidth:         800,
 		MinHeight:        600,
+		Bind: []interface{}{
+			app,
+		},
 	})
 
 	if err != nil {

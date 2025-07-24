@@ -1,4 +1,6 @@
-// ZypherLink macOS Receiver Frontend Logic
+// Import Wails runtime and Go bindings
+import '../wailsjs/runtime/runtime.js';
+import * as App from '../wailsjs/go/main/App.js';
 
 class ZypherLinkApp {
     constructor() {
@@ -11,19 +13,18 @@ class ZypherLinkApp {
         this.waitForWails();
     }
 
-    /**
-     * Wait for Wails to be ready before initializing
-     */
     waitForWails() {
         let attempts = 0;
-        const maxAttempts = 50; // 5 seconds max wait time
+        const maxAttempts = 50;
         
         const checkWails = () => {
             attempts++;
             console.log(`🔍 Checking Wails readiness... (attempt ${attempts})`);
+            this.log(`Checking Wails... (${attempts}/${maxAttempts})`);
             
             if (window.go && window.go.main && window.go.main.App) {
                 console.log('✅ Wails is ready!');
+                this.log('✅ Wails ready! Initializing app...');
                 this.isWailsReady = true;
                 this.testConnection();
                 this.initializeApp();
@@ -32,6 +33,7 @@ class ZypherLinkApp {
             
             if (attempts >= maxAttempts) {
                 console.error('❌ Wails failed to initialize after 5 seconds');
+                this.log('❌ Wails failed to initialize');
                 this.showError('Failed to connect to application backend');
                 return;
             }
@@ -42,50 +44,44 @@ class ZypherLinkApp {
         checkWails();
     }
 
-    /**
-     * Test the Go-JS connection
-     */
     async testConnection() {
         try {
-            const result = await window.go.main.App.TestConnection();
+            const result = await App.TestConnection();
             console.log('🧪 Connection test result:', result);
+            this.log(`Connection test: ${result}`);
         } catch (error) {
             console.error('❌ Connection test failed:', error);
+            this.log(`❌ Connection test failed: ${error}`);
         }
     }
 
-    /**
-     * Initialize the application
-     */
     async initializeApp() {
         console.log('🎯 Initializing ZypherLink app...');
+        this.log('🎯 Initializing ZypherLink app...');
         
         try {
             this.setupEventListeners();
             this.setupWailsEventListeners();
             
-            // Load initial data with retry
             await this.loadInitialDataWithRetry();
-            
-            // Start periodic updates
             this.startPeriodicUpdates();
             
             this.showNotification('ZypherLink Ready', 'Application initialized successfully', 'success');
+            this.log('✅ App fully initialized');
         } catch (error) {
             console.error('❌ Failed to initialize app:', error);
+            this.log(`❌ Initialization error: ${error}`);
             this.showNotification('Initialization Error', 'Failed to start application', 'error');
         }
     }
 
-    /**
-     * Load initial data with retry mechanism
-     */
     async loadInitialDataWithRetry() {
         const maxRetries = 5;
         
         for (let i = 0; i < maxRetries; i++) {
             try {
                 console.log(`📊 Loading initial data (attempt ${i + 1})...`);
+                this.log(`📊 Loading initial data (attempt ${i + 1})...`);
                 
                 await this.updateDeviceInfo();
                 await this.updateServerStatus();
@@ -93,28 +89,25 @@ class ZypherLinkApp {
                 await this.updateTransferHistory();
                 
                 console.log('✅ Initial data loaded successfully');
-                return; // Success, exit retry loop
+                this.log('✅ Initial data loaded successfully');
+                return;
                 
             } catch (error) {
                 console.warn(`⚠️ Attempt ${i + 1} failed:`, error);
+                this.log(`⚠️ Attempt ${i + 1} failed: ${error}`);
                 
                 if (i === maxRetries - 1) {
-                    throw error; // Final attempt failed
+                    throw error;
                 }
                 
-                // Wait before retry
                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
         }
     }
 
-    /**
-     * Set up event listeners for UI interactions
-     */
     setupEventListeners() {
         console.log('🎧 Setting up event listeners...');
         
-        // Toggle server button
         const toggleBtn = document.getElementById('toggleServerBtn');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => {
@@ -123,7 +116,6 @@ class ZypherLinkApp {
             });
         }
 
-        // Regenerate QR button
         const regenerateBtn = document.getElementById('regenerateBtn');
         if (regenerateBtn) {
             regenerateBtn.addEventListener('click', () => {
@@ -133,9 +125,6 @@ class ZypherLinkApp {
         }
     }
 
-    /**
-     * Set up Wails event listeners
-     */
     setupWailsEventListeners() {
         if (!window.runtime) {
             console.warn('⚠️ Wails runtime not available');
@@ -144,33 +133,26 @@ class ZypherLinkApp {
 
         console.log('📡 Setting up Wails event listeners...');
 
-        // QR code updates
         window.runtime.EventsOn('qr-updated', (qrCode) => {
             console.log('📋 QR code updated event received');
             this.displayQRCode(qrCode);
         });
 
-        // Notifications from backend
         window.runtime.EventsOn('notification', (notification) => {
             console.log('📢 Notification event received:', notification);
             this.showNotification(notification.title, notification.message, notification.type);
         });
 
-        // Transfer progress updates
         window.runtime.EventsOn('transfer-progress', (progress) => {
             console.log('📈 Transfer progress event received:', progress);
             this.updateTransferProgress(progress);
         });
 
-        // App ready event
         window.runtime.EventsOn('app-ready', () => {
             console.log('🎉 App ready event received');
         });
     }
 
-    /**
-     * Start periodic updates for dynamic content
-     */
     startPeriodicUpdates() {
         console.log('⏰ Starting periodic updates...');
         
@@ -183,17 +165,15 @@ class ZypherLinkApp {
             } catch (error) {
                 console.warn('⚠️ Periodic update failed:', error);
             }
-        }, 5000); // Update every 5 seconds
+        }, 5000);
     }
 
-    /**
-     * Update device information display
-     */
     async updateDeviceInfo() {
         try {
             console.log('📱 Updating device info...');
-            const deviceInfo = await window.go.main.App.GetDeviceInfo();
+            const deviceInfo = await App.GetDeviceInfo();
             console.log('📱 Device info received:', deviceInfo);
+            this.log(`Device info: ${JSON.stringify(deviceInfo)}`);
             
             if (deviceInfo) {
                 this.setElementText('deviceName', deviceInfo.device_name || 'Unknown Device');
@@ -202,25 +182,22 @@ class ZypherLinkApp {
             }
         } catch (error) {
             console.error('❌ Failed to get device info:', error);
+            this.log(`❌ Device info error: ${error}`);
             this.setElementText('deviceName', 'Error loading...');
             this.setElementText('ipAddress', 'Error loading...');
             this.setElementText('transferPort', 'Error loading...');
         }
     }
 
-    /**
-     * Update server status display
-     */
     async updateServerStatus() {
         try {
             console.log('📊 Updating server status...');
-            const status = await window.go.main.App.GetServerStatus();
+            const status = await App.GetServerStatus();
             console.log('📊 Server status received:', status);
             
             if (status) {
                 this.isServerRunning = status.running;
                 
-                // Update status indicator
                 const statusDot = document.querySelector('.status-dot');
                 const toggleBtn = document.getElementById('toggleServerBtn');
                 
@@ -236,31 +213,30 @@ class ZypherLinkApp {
                     toggleBtn?.classList.add('btn-start');
                 }
                 
-                // Update stats
                 this.setElementText('deviceCount', status.device_count || 0);
                 this.setElementText('transferCount', status.transfer_count || 0);
             }
         } catch (error) {
             console.error('❌ Failed to get server status:', error);
+            this.log(`❌ Status error: ${error}`);
         }
     }
 
-    /**
-     * Update QR code display
-     */
     async updateQRCode() {
         try {
             console.log('📋 Updating QR code...');
+            this.log('📋 Getting QR code...');
             this.showQRPlaceholder('Loading QR code...');
             
-            const qrCode = await window.go.main.App.GetQRCode();
+            const qrCode = await App.GetQRCode();
             console.log('📋 QR code received, length:', qrCode ? qrCode.length : 0);
             
             if (qrCode && qrCode.length > 0) {
                 this.displayQRCode(qrCode);
             } else {
                 console.log('🔄 No QR code available, requesting generation...');
-                const newQRCode = await window.go.main.App.RegenerateQR();
+                this.log('⚠️ No QR code available, generating...');
+                const newQRCode = await App.RegenerateQR();
                 if (newQRCode) {
                     this.displayQRCode(newQRCode);
                 } else {
@@ -269,21 +245,19 @@ class ZypherLinkApp {
             }
         } catch (error) {
             console.error('❌ Failed to get QR code:', error);
+            this.log(`❌ QR code error: ${error}`);
             this.showQRPlaceholder('Error loading QR code');
         }
     }
 
-    /**
-     * Display QR code image
-     */
     displayQRCode(qrCode) {
         console.log('🖼️ Displaying QR code...');
+        this.log('✅ QR code displayed');
         
         const qrPlaceholder = document.getElementById('qrPlaceholder');
         const qrImage = document.getElementById('qrImage');
         
         if (qrCode && qrCode.length > 0) {
-            // Hide placeholder and show QR image
             if (qrPlaceholder) qrPlaceholder.style.display = 'none';
             if (qrImage) {
                 qrImage.src = `data:image/png;base64,${qrCode}`;
@@ -292,8 +266,6 @@ class ZypherLinkApp {
             }
             
             this.currentQRCode = qrCode;
-            
-            // Update QR info (placeholder values for now)
             this.setElementText('pairingCode', '******');
             this.setElementText('qrExpiry', this.formatExpiryTime());
             
@@ -302,9 +274,6 @@ class ZypherLinkApp {
         }
     }
 
-    /**
-     * Show QR placeholder with message
-     */
     showQRPlaceholder(message = 'Generating QR Code...') {
         console.log('📋 Showing QR placeholder:', message);
         
@@ -319,21 +288,15 @@ class ZypherLinkApp {
         }
     }
 
-    /**
-     * Update transfer history display
-     */
     async updateTransferHistory() {
         try {
-            const history = await window.go.main.App.GetTransferHistory();
+            const history = await App.GetTransferHistory();
             this.displayTransferHistory(history || []);
         } catch (error) {
             console.error('❌ Failed to get transfer history:', error);
         }
     }
 
-    /**
-     * Display transfer history in the UI
-     */
     displayTransferHistory(history) {
         const transfersList = document.getElementById('transfersList');
         
@@ -366,66 +329,59 @@ class ZypherLinkApp {
         transfersList.innerHTML = transfersHTML;
     }
 
-    /**
-     * Toggle server on/off
-     */
     async toggleServer() {
         try {
             console.log('🔀 Toggling server status...');
-            const newStatus = await window.go.main.App.ToggleServerStatus();
+            this.log('🔀 Toggling server...');
+            const newStatus = await App.ToggleServerStatus();
             
             if (newStatus) {
                 this.showNotification('Server Started', 'ZypherLink is now accepting file transfers', 'success');
+                this.log('Server started');
             } else {
                 this.showNotification('Server Stopped', 'ZypherLink is no longer accepting files', 'info');
+                this.log('Server stopped');
             }
             
-            // Update UI immediately
             setTimeout(() => this.updateServerStatus(), 500);
             
         } catch (error) {
             console.error('❌ Failed to toggle server:', error);
+            this.log(`❌ Toggle error: ${error}`);
             this.showNotification('Server Error', 'Failed to change server status', 'error');
         }
     }
 
-    /**
-     * Regenerate QR code
-     */
     async regenerateQR() {
         try {
             console.log('🔄 Regenerating QR code...');
+            this.log('🔄 Regenerating QR code...');
             this.showQRPlaceholder('Generating new QR code...');
             
-            const newQRCode = await window.go.main.App.RegenerateQR();
+            const newQRCode = await App.RegenerateQR();
             if (newQRCode) {
                 this.displayQRCode(newQRCode);
                 this.showNotification('QR Code Updated', 'New pairing code generated', 'success');
+                this.log('✅ New QR code generated');
             } else {
                 this.showQRPlaceholder('Failed to generate QR code');
                 this.showNotification('QR Generation Failed', 'Could not generate new QR code', 'error');
+                this.log('❌ QR generation failed');
             }
             
         } catch (error) {
             console.error('❌ Failed to regenerate QR:', error);
+            this.log(`❌ QR regeneration error: ${error}`);
             this.showQRPlaceholder('Error generating QR code');
             this.showNotification('QR Generation Failed', 'Could not generate new QR code', 'error');
         }
     }
 
-    /**
-     * Update transfer progress display
-     */
     updateTransferProgress(progress) {
         console.log('📈 Updating transfer progress:', progress);
-        // This would update a progress bar or transfer status
-        // For now, just refresh the transfer history
         setTimeout(() => this.updateTransferHistory(), 1000);
     }
 
-    /**
-     * Show notification to user
-     */
     showNotification(title, message, type = 'info') {
         console.log(`📢 Notification: [${type}] ${title}: ${message}`);
         
@@ -441,7 +397,6 @@ class ZypherLinkApp {
         
         container.appendChild(notification);
         
-        // Auto-remove after 5 seconds
         setTimeout(() => {
             if (notification.parentNode) {
                 notification.style.animation = 'slideOut 0.3s ease';
@@ -450,13 +405,10 @@ class ZypherLinkApp {
         }, 5000);
     }
 
-    /**
-     * Show error message when Wails connection fails
-     */
     showError(message) {
         console.error('💥 Critical error:', message);
+        this.log(`💥 Critical error: ${message}`);
         
-        // Update UI to show error state
         this.setElementText('deviceName', 'Connection Error');
         this.setElementText('ipAddress', 'Check Console');
         this.setElementText('transferPort', 'See Logs');
@@ -465,9 +417,6 @@ class ZypherLinkApp {
         this.showQRPlaceholder('Connection Error - Check Console');
     }
 
-    /**
-     * Utility functions
-     */
     setElementText(id, text) {
         const element = document.getElementById(id);
         if (element) {
@@ -498,15 +447,20 @@ class ZypherLinkApp {
     }
 
     formatExpiryTime() {
-        // This would calculate actual expiry time
-        // For now, return placeholder
-        const expiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+        const expiry = new Date(Date.now() + 10 * 60 * 1000);
         return expiry.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    /**
-     * Cleanup when app is closing
-     */
+    log(message) {
+        console.log(message);
+        const logContent = document.getElementById('logContent');
+        if (logContent) {
+            const timestamp = new Date().toLocaleTimeString();
+            logContent.innerHTML += `<br>${timestamp}: ${message}`;
+            logContent.scrollTop = logContent.scrollHeight;
+        }
+    }
+
     destroy() {
         if (this.updateInterval) {
             clearInterval(this.updateInterval);
@@ -514,7 +468,20 @@ class ZypherLinkApp {
     }
 }
 
-// Add slideOut animation to CSS
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log('🌟 DOM loaded, starting ZypherLink...');
+    window.zyperLinkApp = new ZypherLinkApp();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (window.zyperLinkApp) {
+        window.zyperLinkApp.destroy();
+    }
+});
+
+// Add slideOut animation
 const style = document.createElement('style');
 style.textContent = `
     @keyframes slideOut {
@@ -529,16 +496,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('🌟 DOM loaded, starting ZypherLink...');
-    window.zyperLinkApp = new ZypherLinkApp();
-});
-
-// Cleanup on page unload
-window.addEventListener('beforeunload', () => {
-    if (window.zyperLinkApp) {
-        window.zyperLinkApp.destroy();
-    }
-});
