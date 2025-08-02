@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <style name="Base.Theme.ZypherLink" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Material Components compatible attributes -->
+        <item name="colorPrimary">@color/primary_orange</item>
+        <item name="colorPrimaryVariant">@color/light_orange</item>
+        <item name="colorSecondary">@color/primary_purple</item>
+        <item name="colorSecondaryVariant">@color/dark_purple</item>
+        <item name="colorError">@color/error_red</item>
+        <item name="colorSurface">@color/background_light</item>
+        <item name="colorBackground">@color/background_light</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="colorOnSecondary">@color/white</item>
+        <item name="colorOnError">@color/white</item>
+        <item name="colorOnSurface">@color/text_primary</item>
+        <item name="colorOnBackground">@color/text_primary</item>
+        
+        <!-- Status bar color -->
+        <item name="android:statusBarColor">@color/primary_orange</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">false</item>
+    </style>
+
+    <style name="Theme.ZypherLink" parent="Base.Theme.ZypherLink" />
+    
+    <style name="Theme.ZypherLink.Scanner" parent="Theme.ZypherLink">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+
+</resources>
